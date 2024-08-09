@@ -1,16 +1,26 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { StateMachineConstruct } from "./constructs/statemachine";
+import { Config } from "../config";
+import { DwhConstruct } from "./constructs/dwh";
+
+type LineAudienceStackProps = cdk.StackProps & {
+  config: Config;
+};
 
 export class LineAudienceStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: LineAudienceStackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const dwh = new DwhConstruct(this, "Dwh", {});
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'LineAudienceQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    new StateMachineConstruct(this, "StateMachine", {
+      athenaWgName: dwh.athenaWgName,
+      dbName: dwh.dbName,
+      tableName: dwh.tableName,
+      connectionArn: props.config.connectionArn,
+      connectionName: props.config.connectionName,
+      connectionSecretArn: props.config.connectionSecretArn,
+    });
   }
 }
